@@ -8,12 +8,13 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const root = path.join(__dirname, "..");
+// node tools/serve.cjs 8197 Work   serves just the game (what Dev Mode and a tunnel need); no dir = the repo root (harness)
+const root = process.argv[3] ? path.resolve(path.join(__dirname, ".."), process.argv[3]) : path.join(__dirname, "..");
 const port = parseInt(process.argv[2] || "8150", 10);
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".mjs": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8", ".png": "image/png", ".jpg": "image/jpeg", ".json": "application/json",
-  ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json"
+  ".txt": "text/plain; charset=utf-8", ".webmanifest": "application/manifest+json", ".glb": "model/gltf-binary", ".mp3": "audio/mpeg"
 };
 
 http.createServer(function (req, res) {

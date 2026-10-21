@@ -82,13 +82,14 @@ globalThis.SB = globalThis.SB || {};
 
     // Each human plays as their own HopLobby avatar. One that fails to load keeps the stand-in body.
     progress(0.6, "Loading avatars…");
-    await Promise.all(S.players.map(function (p, i) {
-      if (p.bot) return null;
-      const timeout = new Promise((res) => setTimeout(() => res(null), 9000));
-      return Promise.race([HL.avatar(p.id, { format: "glb" }), timeout])
-        .then((buf) => (buf ? SB.Body.useAvatar(SB.View.chars[i], buf) : false))
-        .then(() => progress(0.6 + 0.35 / S.players.length))
-        .catch((e) => { console.warn("avatar", p.name, e); });
+    const timeout = () => new Promise((res) => setTimeout(() => res(null), 9000));
+    const models = S.players.map((p) => (p.bot ? null : Promise.race([HL.avatar(p.id, { format: "glb" }), timeout()]).catch((e) => { console.warn("avatar", p.name, e); return null; })));
+    await Promise.all(S.players.map(async function (p, i) {
+      // A computer rival wears the HopLobby look too: the player's own model, dressed in other colours.
+      const buf = await (p.bot ? models[S.me] : models[i]);
+      if (!buf) return;
+      try { await SB.Body.useAvatar(SB.View.chars[i], buf, p.bot ? { hue: 0.55 } : null); } catch (e) { console.warn("avatar", p.name, e); }
+      progress(0.6 + 0.35 / S.players.length);
     }));
 
     wire(ctx);

@@ -45,3 +45,8 @@ a computer rival (lobby option = its difficulty).
    Never push/submit without asking.
 ## Branding in the field (2026-10-21)
 20 advertising boards round the arena edge (world.js adBoards: CTSG seal, HopLobby primary logo, both), a banner on THE WALL and one on the tower. Scenery only (arrows pass through). Logos unaltered; kept out of the HUD per platform rule. The user said to add both logos (same green light as Fairway Kings, which is not written down anywhere): record it in the submission notes. Own-brand only, no third-party ads.
+
+## Bot look + Dev Mode (2026-10-21, end of session)
+- User played a Dev Mode lobby through a Cloudflare tunnel (user runs: E:\claude-tmp\cloudflared\cloudflared.exe tunnel --url http://127.0.0.1:8197 --http-host-header localhost:8197; serve with: node tools\serve.cjs 8197 Work; then prepare_dev_mode on the https URL). localhost links failed to load.
+- User asked that bots follow HopLobby character design. DONE IN CODE, NOT TESTED: the rival is now the player's own avatar glb with outfit hues turned (avatar.js retint, main.js models[S.me], hue 0.55). Check: solo harness (tools/harness.html?n=1), then real Dev Mode solo. Falls back to the Mixamo body if no avatar.
+- Servers/Edge stopped. Not pushed.

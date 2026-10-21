@@ -62,9 +62,12 @@ function readRig(bones) {
 // ---- loading -------------------------------------------------------------------------------------
 // A .glb (ArrayBuffer) -> an avatar that follows `driver` ({ root, bone(name), bindPose(fn) }), or null if its
 // rig isn't readable. The driver must stand at the origin, unturned, while this runs.
-export async function loadAvatar(buffer, driver) {
+// `tint` ({ hue }) turns the outfit colours round the colour wheel: a computer rival is built from the player's
+// own model (the HopLobby look: flat-shaded, vertex colours) but dressed differently. Skin and hair tones stay.
+export async function loadAvatar(buffer, driver, tint) {
   const gltf = await new GLTFLoader().parseAsync(buffer.slice(0), "");
   const root = gltf.scene;
+  if (tint) retint(root, tint.hue || 0.5);
   root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.frustumCulled = false; } });
   const bones = [];
   root.traverse((o) => { if (o.isBone) bones.push(o); });
@@ -78,6 +81,20 @@ export async function loadAvatar(buffer, driver) {
   const av = new Avatar(root, map, driver);
   av.clips = gltf.animations || [];
   return av;
+}
+
+function retint(root, dh) {
+  const c = new THREE.Color(), hsl = {};
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const a = o.geometry.getAttribute("color");
+    if (!a) return;
+    for (let i = 0; i < a.count; i++) {
+      c.setRGB(a.getX(i), a.getY(i), a.getZ(i)).getHSL(hsl);
+      if (hsl.s > 0.35 && hsl.h > 0.1 && hsl.h < 0.97) { c.setHSL((hsl.h + dh) % 1, hsl.s, hsl.l); a.setXYZ(i, c.r, c.g, c.b); }
+    }
+    a.needsUpdate = true;
+  });
 }
 
 const _q = new THREE.Quaternion(), _p = new THREE.Quaternion(), _rq = new THREE.Quaternion();

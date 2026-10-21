@@ -452,7 +452,7 @@ globalThis.SB = globalThis.SB || {};
 
   // A player's HopLobby avatar (.glb) takes over from the packed body: the body keeps playing the clips, and
   // keeps the bow and quiver, but is hidden; the avatar copies its pose each frame (src/avatar.js).
-  Bo.useAvatar = function (c, buffer) {
+  Bo.useAvatar = function (c, buffer, tint) {
     if (!SB.Avatar || !c) return Promise.resolve(false);
     const M = c.M, byName = {};
     Object.keys(M.BN).forEach(function (n) { byName[n] = c.bones[M.BN[n]]; });
@@ -475,7 +475,7 @@ globalThis.SB = globalThis.SB || {};
     const p = c.root.position.clone(), ry = c.root.rotation.y, bq = c.body.quaternion.clone(), bp = c.body.position.clone();
     c.root.position.set(0, 0, 0); c.root.rotation.set(0, 0, 0); c.body.quaternion.identity(); c.body.position.set(0, 0, 0);
     c.root.updateMatrixWorld(true);
-    return SB.Avatar.load(buffer, driver).then(function (av) {
+    return SB.Avatar.load(buffer, driver, tint).then(function (av) {
       if (av) { c.avatar = av; c.mesh.visible = false; }
       return !!av;
     }).finally(function () {
