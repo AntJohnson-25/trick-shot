@@ -1,0 +1,31 @@
+{
+  "title": "Trick Shot",
+  "gameId": "trick-shot",
+  "minPlayers": 1,
+  "maxPlayers": 4,
+  "lateJoin": false,
+  "options": [
+    { "key": "letters", "label": "Letters to lose", "type": "choice", "default": "5",
+      "choices": [
+        { "value": "5", "label": "A-R-R-O-W (5 letters)" },
+        { "value": "3", "label": "B-O-W (3 letters, shorter)" }
+      ] },
+    { "key": "air", "label": "A shot counts", "type": "choice", "default": "air",
+      "choices": [
+        { "value": "air", "label": "Only if released in the air" },
+        { "value": "any", "label": "From anywhere (easier)" }
+      ] },
+    { "key": "rival", "label": "Computer rival when you play alone", "type": "choice", "default": "1",
+      "choices": [
+        { "value": "0", "label": "Easy" },
+        { "value": "1", "label": "Normal" },
+        { "value": "2", "label": "Hard" }
+      ] }
+  ],
+  "leaderboards": [],
+  "achievements": [],
+  "store": [],
+  "build": {
+    "output": "Work"
+  }
+}
