@@ -336,12 +336,64 @@ globalThis.SB = globalThis.SB || {};
       bales.push(m4.compose(v3.set(Math.cos(a) * r, 0.75, Math.sin(a) * r), q.setFromEuler(e3.set(0, Math.PI / 2 - a, Math.PI / 2)), s3.set(1, 1, 1)).clone());
     }
     instanced(baleGeo, M.straw, bales, true);
+    adBoards(g, sim);
 
     V.scene.add(g);
     W.group = g;
     W.stage = null;
     return W;
   };
+
+  // Advertising boards round the field (the developer's CTSG seal and the HopLobby primary logo, both drawn
+  // unaltered with clear space), plus a banner on THE WALL and one on the tower. Scenery only: arrows fly through.
+  function loadImg(src) { return new Promise(function (res) { const i = new Image(); i.onload = function () { res(i); }; i.onerror = function () { res(null); }; i.src = src; }); }
+  function adTextures() {
+    const mk = function () {
+      const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 256;
+      const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+      const g = cv.getContext("2d");
+      g.fillStyle = "#14100b"; g.fillRect(0, 0, 1024, 256);
+      g.strokeStyle = "#ffd52e"; g.lineWidth = 10; g.strokeRect(8, 8, 1008, 240);
+      return { g: g, t: t };
+    };
+    const A = mk(), B = mk(), C = mk();
+    // draw an image inside a box without stretching it
+    const fit = function (g, img, x, y, w, h) { const k = Math.min(w / img.width, h / img.height), dw = img.width * k, dh = img.height * k; g.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh); };
+    Promise.all([loadImg("assets/brand/ctsg-seal-color-512.png"), loadImg("assets/brand/hoplobby-primary-on-dark-800.png")]).then(function (im) {
+      const seal = im[0], hop = im[1];
+      if (seal) {
+        fit(A.g, seal, 34, 28, 200, 200);
+        A.g.fillStyle = "#fff4dc"; A.g.textBaseline = "middle"; A.g.font = "bold 62px 'Trebuchet MS', sans-serif"; A.g.fillText("CALAMITY TECH", 262, 98);
+        A.g.fillStyle = "#ffd52e"; A.g.fillText("SOLUTIONS GROUP", 262, 166);
+        fit(C.g, seal, 60, 32, 192, 192);
+      }
+      if (hop) { fit(B.g, hop, 112, 48, 800, 160); fit(C.g, hop, 300, 56, 660, 144); }
+      [A, B, C].forEach(function (o) { o.t.needsUpdate = true; });
+    });
+    return [C.t, A.t, B.t];
+  }
+  function adBoards(g, sim) {
+    const tex = adTextures();
+    const mats = tex.map(function (t) { return new THREE.MeshBasicMaterial({ map: t }); });
+    const back = new THREE.MeshStandardMaterial({ color: 0x2a1d10, roughness: 0.9 });
+    const frame = new THREE.BoxGeometry(4.8, 1.3, 0.1), post = new THREE.BoxGeometry(0.1, 1.5, 0.1), face = new THREE.PlaneGeometry(4.6, 1.15);
+    const N = 20, r = sim.ARENA_R + 3.3;
+    for (let i = 0; i < N; i++) {
+      const a = (i + 0.5) / N * Math.PI * 2, b = new THREE.Group();
+      const f = new THREE.Mesh(frame, back); f.position.y = 1.0; b.add(f);
+      const p = new THREE.Mesh(face, mats[i % 3]); p.position.set(0, 1.0, 0.06); b.add(p);
+      [-2.1, 2.1].forEach(function (x) { const s = new THREE.Mesh(post, back); s.position.set(x, 0.75, -0.05); b.add(s); });
+      b.position.set(Math.cos(a) * r, 0, Math.sin(a) * r);
+      b.lookAt(0, 0, 0);
+      g.add(b);
+    }
+    const banner = function (w, h, x, y, z, ry, mat) {
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+      m.position.set(x, y, z); m.rotation.y = ry; g.add(m);
+    };
+    banner(5.2, 1.3, 0, 0.67, -15 + 0.37, 0, mats[0]);                                 // THE WALL, the side the archers stand on
+    banner(2.0, 0.5, 24 - 1.12, 4.1, 10 + 0.0, -Math.PI / 2, mats[0]);                     // the tower, facing the arena
+  }
 
   function sign(text, w, h, bg, fg) {
     const t = canvasTex(w, h, function (g) {

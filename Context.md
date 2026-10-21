@@ -43,3 +43,5 @@ a computer rival (lobby option = its difficulty).
 1. User Dev Mode test with friends (2-4): real avatars, bow in hand, pointer lock, turn flow.
 2. Fix what that shows; then HANDOFF licence table check, demo host (GitHub Pages), cover art, submission draft.
    Never push/submit without asking.
+## Branding in the field (2026-10-21)
+20 advertising boards round the arena edge (world.js adBoards: CTSG seal, HopLobby primary logo, both), a banner on THE WALL and one on the tower. Scenery only (arrows pass through). Logos unaltered; kept out of the HUD per platform rule. The user said to add both logos (same green light as Fairway Kings, which is not written down anywhere): record it in the submission notes. Own-brand only, no third-party ads.
