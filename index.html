@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Trick Shot: Archery HORSE</title>
+<meta name="description" content="Trick Shot is archery HORSE with friends. Jump, flip and twist, stick an arrow in a target from the air, and make everyone else match it or spell A-R-R-O-W.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css?v=7">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="plist"></div>
+  <div id="duel">
+    <div id="modeBox"><div id="modeTxt"></div><div id="goalTxt"></div></div>
+  </div>
+  <div id="timer"></div>
+  <div id="sight">
+    <svg viewBox="0 0 60 60"><circle class="track" cx="30" cy="30" r="25"></circle><circle id="powerRing" cx="30" cy="30" r="25"></circle></svg>
+    <i class="h"></i><i class="v"></i><b></b>
+    <div id="dist"></div>
+  </div>
+  <div id="goalPin"><div id="goalArrow"><svg viewBox="0 0 40 40" width="34" height="34"><path d="M6 20 H28 M20 8 L32 20 L20 32" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div id="goalPinTxt"></div></div>
+  <div id="inset"><span>TARGET CAM</span><b></b></div>
+  <div id="combo"></div>
+  <div id="airTag">IN THE AIR</div>
+  <div id="popup"></div>
+  <div id="big"></div>
+  <div id="sub"></div>
+  <div id="keys">
+    <div class="kh">CONTROLS</div>
+    <div class="kr"><span class="kc">W A S D</span><span>move</span></div>
+    <div class="kr"><span class="kc">SPACE</span><span>jump</span></div>
+    <div class="kr"><span class="kc">SPACE</span><i>again in the air +</i></div>
+    <div class="kr sub"><span class="kc">W</span><span>front flip</span></div>
+    <div class="kr sub"><span class="kc">S</span><span>back flip</span></div>
+    <div class="kr sub"><span class="kc">A / D</span><span>side flip</span></div>
+    <div class="kr sub"><span class="kc">none</span><span>twist jump</span></div>
+    <div class="kr"><span class="kc">Q / E</span><span>corkscrew spin</span></div>
+    <div class="kr"><span class="kc">CLICK</span><span>shoot (tap, or hold + release)</span></div>
+  </div>
+  <div id="slowNote"></div>
+</div>
+
+<div id="needClick" class="hidden"><div><b id="ncTitle">Click to aim</b><small id="ncSub">Esc gives the mouse back (HopLobby's menu)</small></div></div>
+<div id="rotate"><div>Trick Shot needs a keyboard and mouse<br><small>Open it on a computer</small></div></div>
+
+<div id="loading">
+  <div class="logo">TRICK<span> SHOT</span></div>
+  <div class="ld-bar"><span id="ld-fill"></span></div>
+  <div class="ld-sub" id="ld-msg">Loading...</div>
+  <div class="ld-brands"><div class="ld-brand"><img src="assets/brand/ctsg-seal-color-512.png" alt="Calamity Tech Solutions Group"><small>A CTSG GAME</small></div></div>
+</div>
+<script>
+// Show load failures on the loading screen instead of hanging on "Loading...".
+addEventListener("error", function (e) { var m = document.getElementById("ld-msg"); if (m && document.getElementById("loading") && !document.getElementById("loading").classList.contains("hidden")) m.textContent = "Could not start: " + (e.message || "a file failed to load"); });
+addEventListener("unhandledrejection", function (e) { var m = document.getElementById("ld-msg"); if (m && document.getElementById("loading") && !document.getElementById("loading").classList.contains("hidden")) m.textContent = "Could not start: " + (e.reason && e.reason.message || e.reason); });
+</script>
+
+<script src="https://hoplobby.com/sdk/v1/hoplobby.js"></script>
+<script type="module" src="src/boot.js?v=7"></script>
+<script defer src="src/sim.js?v=7"></script>
+<script defer src="src/chars/roster.js?v=7"></script>
+<script defer src="src/chars/clips.js?v=7"></script>
+<script defer src="src/body.js?v=7"></script>
+<script defer src="src/world.js?v=7"></script>
+<script defer src="src/fx.js?v=7"></script>
+<script defer src="src/view.js?v=7"></script>
+<script defer src="src/input.js?v=7"></script>
+<script defer src="src/audio.js?v=7"></script>
+<script defer src="src/hud.js?v=7"></script>
+<script defer src="src/main.js?v=7"></script>
+</body>
+</html>
