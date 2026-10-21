@@ -13,7 +13,7 @@ globalThis.SB = globalThis.SB || {};
   H.init = function () {
     H.el = {};
     ["hud", "plist", "modeTxt", "goalTxt", "timer", "sight", "powerRing",
-      "dist", "goalPin", "goalPinTxt", "goalArrow", "airTag", "popup", "big", "sub", "keys", "slowNote"].forEach((id) => { H.el[id] = $(id); });
+      "dist", "goalPin", "goalPinTxt", "goalArrow", "airTag", "combo", "popup", "big", "sub", "keys", "slowNote"].forEach((id) => { H.el[id] = $(id); });
   };
   H.show = function (on) { H.el.hud.classList.toggle("hidden", !on); };
 
@@ -51,22 +51,55 @@ globalThis.SB = globalThis.SB || {};
   H.event = function (e, sim) {
     const me = sim.humanId, mine = e.id === me || e.shooter === me;
     switch (e.t) {
-      case "intro": say("TRICK SHOT", "Jump, flip, shoot. Hit it from the air. Five letters (A-R-R-O-W) and you lose.", 3.2); break;
+      case "intro": say("TRICK SHOT", "Jump, flip, shoot. Hit it from the air. Copy the trick exactly. " + SB.CFG.LETTERS.length + " letters (" + SB.CFG.LETTERS.split("").join("-") + ") and you lose.", 3.2); break;
       case "turn": {
         const sh = sim.archers[e.shooter], you = e.shooter === me;
         if (e.mode === "set") say(you ? "YOUR SET" : sh.name.toUpperCase() + " SETS", you ? "Hit any target while you are in the air" : "Watch the trick, then match it", 1.8);
-        else say(you ? "MATCH IT" : sh.name.toUpperCase() + " MATCHES", sim.targets[e.goal].name + ", from the air", 1.8);
+        else say(you ? "MATCH IT" : sh.name.toUpperCase() + " MATCHES", sim.targets[e.goal].name + " with a " + (e.trick || "Jump Shot"), 2.4);
         break;
       }
       case "trick": if (e.id === me) popup(e.name, "trick"); break;
       case "hit":
-        if (e.id === me && e.label === "M") popup("MISS", "miss");
-        else if (e.id === me) popup(e.name, "gold");
+        if (e.label === "M") { if (e.id === me) popup("MISS", "miss"); }
+        else if (e.dist >= 45) popup("LONG SHOT! " + e.dist + " m", "gold");
+        else popup((e.id === me ? "" : sim.archers[e.id].name + ": ") + e.name + "  ·  " + e.dist + " m", e.id === me ? "gold" : "blue");
         break;
       case "early": popup("keep holding", "miss small"); break;
       case "result": say(e.text, e.sub, 2.7, e.kind === "set" || e.kind === "matched" ? (e.shooter === me ? "good" : "bad") : (e.kind === "letter" && e.shooter !== me ? "good" : "bad")); break;
     }
   };
+
+  // The key presses for a trick label (as sim.trickLabel makes them): shown to whoever has to copy it.
+  function comboOf(label) {
+    const s = [{ k: ["SPACE"], t: "jump" }];
+    const flip = /Front Flip/.test(label) ? ["W", "front flip"] : /Back Flip/.test(label) ? ["S", "back flip"] : /Side Flip/.test(label) ? ["A or D", "side flip"] : null;
+    const twist = /Twist|Corkscrew/.test(label), cork = /Corkscrew/.test(label);
+    if (flip) s.push({ k: ["hold " + flip[0], "SPACE"], t: "in the air: " + flip[1] });
+    else if (!cork && (twist || /Double/.test(label))) s.push({ k: ["SPACE"], t: "in the air again: twist jump" });
+    if (flip && twist) s.push({ k: ["Q / E"], t: "then twist" });
+    else if (cork) s.push({ k: ["Q / E"], t: "in the air: corkscrew spin" });
+    s.push({ k: ["CLICK"], t: "shoot before you land" });
+    return s;
+  }
+  let comboFor = null;
+  function showCombo(on, label) {
+    const E = H.el.combo;
+    if (!on) { E.classList.remove("on"); comboFor = null; return; }
+    if (comboFor !== label) {
+      comboFor = label;
+      E.textContent = "";
+      const h = document.createElement("div"); h.className = "ch"; h.textContent = "COPY THIS TRICK"; E.appendChild(h);
+      const n = document.createElement("div"); n.className = "cn"; n.textContent = label; E.appendChild(n);
+      comboOf(label).forEach(function (st, i) {
+        const r = document.createElement("div"); r.className = "cr";
+        const no = document.createElement("b"); no.textContent = String(i + 1); r.appendChild(no);
+        st.k.forEach(function (k, j) { if (j) { const p = document.createElement("i"); p.textContent = "+"; r.appendChild(p); } const c = document.createElement("span"); c.className = "kc"; c.textContent = k; r.appendChild(c); });
+        const t = document.createElement("em"); t.textContent = st.t; r.appendChild(t);
+        E.appendChild(r);
+      });
+    }
+    E.classList.add("on");
+  }
 
   function letters(a) {
     const L = SB.CFG.LETTERS;
@@ -110,10 +143,12 @@ globalThis.SB = globalThis.SB || {};
       H.cards[i].card.classList.toggle("out", !!a.out);
       H.cards[i].card.classList.toggle("you", i === sim.humanId);
     });
+    showCombo(!!h && sim.mode === "match" && sim.phase === "turn" && sim.shooter === h.id && !sim.shot, sim.goalTrick || "Jump Shot");
+    E.keys.classList.toggle("mine", !!h && sim.phase === "turn" && sim.shooter === h.id);
     // what the turn is
     const G = sim.goalTarget();
-    E.modeTxt.textContent = sim.phase === "intro" ? "get ready" : sim.mode === "set" ? "set a trick shot" : "match this";
-    E.goalTxt.textContent = sim.phase === "intro" ? "" : G ? G.name : (sim.shooter === sim.humanId ? "any target, from the air" : "…");
+    E.modeTxt.textContent = sim.phase === "intro" ? "get ready" : sim.mode === "set" ? "set a trick shot" : "match this trick";
+    E.goalTxt.textContent = sim.phase === "intro" ? "" : G ? G.name + "  ·  " + (sim.goalTrick || "Jump Shot") : (sim.shooter === sim.humanId ? "any target, from the air" : "…");
     if (sim.phase === "turn" && !sim.shot) { const s = Math.max(0, Math.ceil(sim.turnT)); E.timer.textContent = s + "s"; E.timer.classList.toggle("low", s <= 8); }
     else E.timer.textContent = "";
     pin(sim);

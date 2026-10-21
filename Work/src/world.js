@@ -391,7 +391,7 @@ globalThis.SB = globalThis.SB || {};
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
       m.position.set(x, y, z); m.rotation.y = ry; g.add(m);
     };
-    banner(5.2, 1.3, 0, 0.67, -15 + 0.37, 0, mats[0]);                                 // THE WALL, the side the archers stand on
+    banner(4.4, 1.1, 0, 1.92, -15 + 0.37, 0, mats[0]);                                 // THE WALL, the side the archers stand on (above its sign)
     banner(2.0, 0.5, 24 - 1.12, 4.1, 10 + 0.0, -Math.PI / 2, mats[0]);                     // the tower, facing the arena
   }
 
@@ -467,6 +467,40 @@ globalThis.SB = globalThis.SB || {};
       leg.castShadow = true;
       g.add(leg);
     });
+    g.position.set(it.x, it.y, it.z);
+    g.rotation.y = Math.atan2(it.nx, it.nz);
+    return g;
+  }
+  // A scarecrow holding the target on its chest: post + cross-bar arms, a plaid shirt, a burlap head and a hat, straw at the cuffs.
+  // The group's +z is the face's normal; the face is the sim's target, everything else is scenery.
+  let scareMats = null;
+  function scarecrowFor(it) {
+    if (!scareMats) scareMats = {
+      shirt: new THREE.MeshStandardMaterial({ map: canvasTex(128, 128, function (g, w, h) {
+        g.fillStyle = "#b8372b"; g.fillRect(0, 0, w, h);
+        g.fillStyle = "rgba(255,230,160,0.5)"; for (let i = 0; i < w; i += 32) { g.fillRect(i, 0, 8, h); g.fillRect(0, i, w, 8); }
+      }), roughness: 1 }),
+      sack: new THREE.MeshStandardMaterial({ color: 0xc9a56a, roughness: 1 }),
+      hats: [0x5a3d22, 0x2c4a7a, 0x4d6b2e].map(function (c) { return new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }); })
+    };
+    const g = new THREE.Group(), r = it.r, top = it.y - it.base + r + 0.75;   // post from the ground (or the deck) up above the head
+    const add = function (geo, mat, x, y, z) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+    add(new THREE.CylinderGeometry(0.05, 0.06, top, 10), M.wood, 0, -it.y + it.base + top / 2, -0.16);
+    add(new THREE.BoxGeometry(r * 3.4, 0.07, 0.07), M.wood, 0, 0.05, -0.16);                         // the cross-bar the arms hang on
+    add(new THREE.BoxGeometry(r * 2.5, r * 2.3, 0.16), scareMats.shirt, 0, 0, -0.12);                // shirt behind the target
+    [-1, 1].forEach(function (s) {
+      add(new THREE.CylinderGeometry(0.075, 0.075, r * 1.2, 10), scareMats.shirt, s * r * 1.45, 0.05, -0.14).rotation.z = Math.PI / 2;   // sleeves
+      const tuft = add(new THREE.ConeGeometry(0.1, 0.3, 8), M.straw, s * r * 2.15, 0.05, -0.14); tuft.rotation.z = -s * Math.PI / 2;
+      add(new THREE.CylinderGeometry(0.03, 0.03, r * 0.9, 6), M.wood, s * r * 0.95, -0.02, 0.02).rotation.z = 0.2 * s;           // the hands holding the target
+    });
+    const f = new THREE.Mesh(new THREE.CircleGeometry(r, 96), M.face); f.position.z = 0.03; g.add(f);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(r * 1.02, 0.022, 8, 48), M.darkWood); rim.position.z = 0.03; g.add(rim);
+    const hy = r + 0.42;
+    add(new THREE.SphereGeometry(0.2, 18, 14), scareMats.sack, 0, hy, -0.12);                       // burlap head
+    add(new THREE.CylinderGeometry(0.34, 0.34, 0.035, 20), scareMats.hats[it.hat || 0], 0, hy + 0.14, -0.12);  // hat brim
+    add(new THREE.CylinderGeometry(0.16, 0.2, 0.24, 18), scareMats.hats[it.hat || 0], 0, hy + 0.27, -0.12);
+    [-1, 1].forEach(function (s) { add(new THREE.SphereGeometry(0.028, 8, 6), M.darkWood, s * 0.07, hy + 0.03, 0.07); });  // eyes
+    add(new THREE.ConeGeometry(0.2, 0.45, 10, 1, true), M.straw, 0, -r * 1.25, -0.12).rotation.x = Math.PI;    // straw skirt under the shirt
     g.position.set(it.x, it.y, it.z);
     g.rotation.y = Math.atan2(it.nx, it.nz);
     return g;
@@ -640,7 +674,7 @@ globalThis.SB = globalThis.SB || {};
     });
     if (b.kind === "wall") {
       const s = sign("THE WALL", 256, 96, "#7a1410", "#ffe9b0");
-      s.scale.set(2.2, 2.2, 1); s.position.set(0, b.h * 0.55, b.d / 2 + 0.02); g.add(s);
+      s.scale.set(2.2, 2.2, 1); s.position.set(0, b.h * 0.3, b.d / 2 + 0.02); g.add(s);
       const s2 = s.clone(); s2.rotation.y = Math.PI; s2.position.z = -b.d / 2 - 0.02; g.add(s2);
     }
     g.position.set(b.x, 0, b.z);
@@ -679,7 +713,7 @@ globalThis.SB = globalThis.SB || {};
     sim.targets.forEach(function (T) {
       const it = Object.assign({}, T, { cx: T.x, cy: T.y, cz: T.z });
       let m = null;
-      if (T.k === "face") m = standFor(it);
+      if (T.k === "face") m = T.scare ? scarecrowFor(it) : standFor(it);
       else if (T.k === "apple") m = appleFor(it);
       else if (T.k === "pumpkin") m = pumpkinFor(it);
       else if (T.k === "bottle") m = bottleFor(it);

@@ -49,10 +49,10 @@ globalThis.SB = globalThis.SB || {};
     box(24, 10, 2.2, 2.2, 5.0, "tower");
     box(-22, -12, 6, 4, 1.7, "deck");
     box(-3.5, 16, 1.6, 1.6, 1.0, "crate"); box(-6.5, 16, 3, 3, 2.6, "lookout");
-    function face(name, x, y, z, r, diff, nx, nz) {
+    function face(name, x, y, z, r, diff, nx, nz, extra) {
       let ax = nx, az = nz;
       if (ax === undefined) { const l = Math.hypot(x, z) || 1; ax = -x / l; az = -z / l; }
-      targets.push({ id: targets.length, k: "face", name: name, x: x, y: y, z: z, r: r, hr: r, diff: diff, nx: ax, nz: az, boss: r * 1.25, broken: false });
+      targets.push(Object.assign({ id: targets.length, k: "face", name: name, x: x, y: y, z: z, r: r, hr: r, diff: diff, nx: ax, nz: az, boss: r * 1.25, broken: false }, extra || {}));
     }
     function ball(k, name, x, y, z, r, diff, extra) {
       targets.push(Object.assign({ id: targets.length, k: k, name: name, x: x, y: y, z: z, r: r, hr: r * 1.25, diff: diff, broken: false }, extra || {}));
@@ -67,6 +67,12 @@ globalThis.SB = globalThis.SB || {};
     ball("balloon", "Gold Balloon", -6, 12, 26, 0.28, 4, { gold: true });
     [6, 8, 10, 12].forEach(function (x, i) { ball("bottle", "Bottle " + (i + 1), x, 1.25, 28, 0.05, 3, { h: 0.28, sy: 0.5 }); });
     ball("apple", "Back Apple", -2, 1.3, 22, 0.065, 3);
+    // scarecrows holding a target on their chest (the face is the target; the body is scenery)
+    face("Scarecrow Sam", 18, 1.55, -12, 0.4, 2, undefined, undefined, { scare: true, base: 0, hat: 0 });
+    face("Scarecrow Pete", -18, 1.55, 20, 0.4, 2, undefined, undefined, { scare: true, base: 0, hat: 1 });
+    face("Farmer Fred", 14, 1.6, -24, 0.34, 3, undefined, undefined, { scare: true, base: 0, hat: 2 });
+    face("Old Hank", -26, 1.6, -20, 0.3, 4, undefined, undefined, { scare: true, base: 0, hat: 0 });
+    face("Deck Scarecrow", -24.2, 3.3, -10.8, 0.36, 3, undefined, undefined, { scare: true, base: 1.7, hat: 1 });
     ball("pumpkin", "Deck Pumpkin", -22, 1.91, -12, 0.25, 2, { sits: true });
     props.push({ k: "fence", x0: 4.6, x1: 13.4, z: 28, y: 1.08 });
     return { boxes: boxes, targets: targets, props: props, spawn: [{ x: -3, z: 8 }, { x: 3, z: 8 }, { x: -8, z: 10 }, { x: 8, z: 10 }] };
@@ -139,7 +145,7 @@ globalThis.SB = globalThis.SB || {};
       phase: "menu", phaseT: 0, t: 0, events: [], humanId: opts.noHuman ? -1 : (opts.local === undefined ? 0 : opts.local),
       difficulty: opts.difficulty === undefined ? 1 : opts.difficulty, winner: -1,
       seed: opts.seed || (Math.random() * 1e9) | 0, nextArrow: 1,
-      mode: "set", setter: 0, shooter: 0, goal: -1, turnNo: 0, turnT: 0, shot: null, banner: null, queue: [],
+      mode: "set", setter: 0, shooter: 0, goal: -1, goalTrick: "", turnNo: 0, turnT: 0, shot: null, banner: null, queue: [],
       // Online: the host decides turns and letters; every screen flies the same arrows (fixed steps).
       net: !!opts.net, isHost: !opts.net || !!opts.host
     };
@@ -342,7 +348,7 @@ globalThis.SB = globalThis.SB || {};
     // Put an arrow in the air. The same numbers on every screen fly the same arrow (fixed steps below).
     function launch(a, ox, oy, oz, vx, vy, vz, air, trick, inv, remote) {
       const ar = { id: S.nextArrow++, owner: a.id, lane: a.lane, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz,
-        flying: true, stuck: null, age: 0, acc: 0, hit: -1, hitAt: 0, air: air, trick: trick, inv: inv,
+        ox: ox, oy: oy, oz: oz, hitDist: 0, flying: true, stuck: null, age: 0, acc: 0, hit: -1, hitAt: 0, air: air, trick: trick, inv: inv,
         skip: S.boxes.filter((b) => ox > b.x0 - 0.05 && ox < b.x1 + 0.05 && oz > b.z0 - 0.05 && oz < b.z1 + 0.05 && oy < b.h + 0.05) };
       S.arrows.push(ar);
       S.shot = ar;
@@ -369,8 +375,8 @@ globalThis.SB = globalThis.SB || {};
         ar.x = x; ar.y = y; ar.z = z;
         if (r.target >= 0) {
           const T = S.targets[r.target];
-          if (ar.hit < 0) { ar.hit = T.id; ar.hitAt = S.t; }
-          emit({ t: "hit", id: ar.owner, arrow: ar.id, target: T.id, kind: T.k, label: "HIT", x: x, y: y, z: z, name: T.name });
+          if (ar.hit < 0) { ar.hit = T.id; ar.hitAt = S.t; ar.hitDist = Math.hypot(x - ar.ox, y - ar.oy, z - ar.oz); }
+          emit({ t: "hit", id: ar.owner, arrow: ar.id, target: T.id, kind: T.k, label: "HIT", x: x, y: y, z: z, name: T.name, dist: Math.round(Math.hypot(x - ar.ox, y - ar.oy, z - ar.oz)) });
           if (T.k === "face") ar.flying = false, ar.stuck = { item: T.id };
           else { T.broken = true; ar.vx *= 0.7; ar.vy *= 0.7; ar.vz *= 0.7; }
         } else {
@@ -493,6 +499,20 @@ globalThis.SB = globalThis.SB || {};
       if (!pool.length) return { x: a.x, z: a.z };
       return pool[Math.floor(R() * pool.length)];
     }
+    // A trick the bot has to do: flip = second-jump kind ("" none), spin = twist. Both come from the trick label.
+    function specOfKind(k) {
+      if (k === "jump") return { flip: "", spin: false };
+      if (k === "twist") return { flip: "none", spin: false };
+      if (k === "flipspin") return { flip: "front", spin: true };
+      return { flip: k, spin: false };
+    }
+    function specOfTrick(label) {
+      const flip = /Front Flip/.test(label) ? "front" : /Back Flip/.test(label) ? "back" : /Side Flip/.test(label) ? (R() < 0.5 ? "left" : "right") : "";
+      const twist = /Twist|Corkscrew/.test(label), cork = /Corkscrew/.test(label);
+      if (flip) return { flip: flip, spin: twist };
+      if (cork) return { flip: "", spin: true };
+      return /Twist|Double/.test(label) ? { flip: "none", spin: false } : { flip: "", spin: false };
+    }
     function botThink(a, dt) {
       const B = a.bot, sk = SKILL[S.difficulty] || SKILL[1], ctl = { wx: 0, wz: 0, want: false, jump: false, spin: 0, flip: "none" };
       if (S.phase !== "turn" || S.shooter !== a.id || a.arrowsLeft <= 0) { if (S.phase !== "turn") B.plan = "idle"; return ctl; }
@@ -500,7 +520,7 @@ globalThis.SB = globalThis.SB || {};
       if (B.plan === "idle") {
         B.T = pickTarget(a);
         B.spot = pickSpot(a, B.T);
-        B.kind = TRICKS[Math.floor(R() * TRICKS.length)];
+        B.spec = S.mode === "match" && S.goalTrick ? specOfTrick(S.goalTrick) : specOfKind(TRICKS[Math.floor(R() * TRICKS.length)]);
         B.jumpAt = 2 + R() * 3; B.relVy = 0.4 + R() * 1.4;
         B.plan = "goto"; B.t = 0;
       }
@@ -523,11 +543,10 @@ globalThis.SB = globalThis.SB || {};
         ctl.want = true; ctl.jump = true; B.plan = "rise"; B.t = 0;
       } else if (B.plan === "rise") {
         ctl.want = true;
-        if (B.kind === "jump") { if (a.vy <= B.relVy * 0.6) B.plan = "release"; }
+        if (!B.spec.flip && !B.spec.spin) { if (a.vy <= B.relVy * 0.6) B.plan = "release"; }
         else if (a.vy <= B.jumpAt) {
-          ctl.jump = true;
-          ctl.flip = B.kind === "front" || B.kind === "back" || B.kind === "left" || B.kind === "right" ? B.kind : B.kind === "flipspin" ? "front" : "none";
-          if (B.kind === "flipspin") ctl.spin = R() < 0.5 ? -1 : 1;
+          if (B.spec.flip) { ctl.jump = true; ctl.flip = B.spec.flip; }
+          if (B.spec.spin) ctl.spin = R() < 0.5 ? -1 : 1;
           B.plan = "rise2"; B.t = 0;
         }
       } else if (B.plan === "rise2") {
@@ -552,7 +571,7 @@ globalThis.SB = globalThis.SB || {};
     // --- the rules
     // The whole state of the game that the host decides (sent with every result / turn so any screen can catch up).
     S.snap = function () {
-      return { mode: S.mode, setter: S.setter, shooter: S.shooter, goal: S.goal, queue: S.queue.slice(), turnNo: S.turnNo, winner: S.winner,
+      return { mode: S.mode, setter: S.setter, shooter: S.shooter, goal: S.goal, trick: S.goalTrick, queue: S.queue.slice(), turnNo: S.turnNo, winner: S.winner,
         letters: S.archers.map((a) => a.letters), out: S.archers.map((a) => (a.out ? a.outTurn || 1 : 0)) };
     };
     S.applySnap = function (s) {
@@ -561,6 +580,7 @@ globalThis.SB = globalThis.SB || {};
       S.mode = s.mode === "match" ? "match" : "set";
       S.setter = id(s.setter, S.setter); S.shooter = id(s.shooter, S.shooter);
       S.goal = Number.isInteger(s.goal) && s.goal < S.targets.length ? s.goal : -1;
+      S.goalTrick = S.goal >= 0 && typeof s.trick === "string" ? s.trick.slice(0, 40) : "";
       S.queue = (Array.isArray(s.queue) ? s.queue : []).filter((v) => id(v, -1) >= 0);
       S.winner = Number.isInteger(s.winner) ? s.winner : -1;
       S.archers.forEach((a, i) => {
@@ -586,7 +606,7 @@ globalThis.SB = globalThis.SB || {};
         if (a.state === "draw" || a.state === "aim") { a.state = "idle"; a.t = 0; a.power = 0; }
         if (a.bot) { a.bot.plan = "idle"; a.bot.t = 0; a.bot.solved = null; }
       });
-      emit({ t: "turn", shooter: S.shooter, mode: S.mode, goal: S.goal, setter: S.setter, snap: S.snap() });
+      emit({ t: "turn", shooter: S.shooter, mode: S.mode, goal: S.goal, trick: S.goalTrick, setter: S.setter, snap: S.snap() });
     }
     // The host (or the offline game) decides what a finished turn means; everyone else is told (applyResult).
     function resolveTurn() {
@@ -599,29 +619,30 @@ globalThis.SB = globalThis.SB || {};
       const nm = (id) => S.archers[id].name;
       if (S.mode === "set") {
         if (T && okAir && !sh.out) {
-          S.goal = hit; S.mode = "match"; S.queue = followersOf(S.setter); S.shooter = S.queue.shift();
-          res = { kind: "set", text: "TRICK SET!", sub: sh.name + " hit the " + T.name + " with a " + ar.trick + ". " + nm(S.shooter) + ": match it!" };
+          S.goal = hit; S.goalTrick = ar.trick; S.mode = "match"; S.queue = followersOf(S.setter); S.shooter = S.queue.shift();
+          res = { kind: "set", text: "TRICK SET!", sub: sh.name + " hit the " + T.name + " from " + Math.round(ar.hitDist) + " m with a " + ar.trick + ". " + nm(S.shooter) + ": match it exactly!" };
         } else {
-          S.setter = nextAlive(S.setter); S.shooter = S.setter; S.goal = -1;
+          S.setter = nextAlive(S.setter); S.shooter = S.setter; S.goal = -1; S.goalTrick = "";
           res = { kind: "noset", text: "NO SET", sub: why + " " + nm(S.setter) + " sets next." };
         }
       } else {
         const goalT = S.targets[S.goal];
-        if (T && okAir && hit === S.goal && !sh.out) {
-          res = { kind: "matched", text: "MATCHED!", sub: sh.name + " hit the " + goalT.name + " with a " + ar.trick + "." };
+        const sameTrick = !!ar && ar.trick === S.goalTrick;
+        if (T && okAir && hit === S.goal && sameTrick && !sh.out) {
+          res = { kind: "matched", text: "MATCHED!", sub: sh.name + " hit the " + goalT.name + " from " + Math.round(ar.hitDist) + " m with a " + ar.trick + "." };
         } else if (sh.out) {
           res = { kind: "left", text: "PLAYER LEFT", sub: why };
         } else {
           sh.letters++;
           const L = CFG.LETTERS.charAt(sh.letters - 1);
-          const detail = T && okAir ? "Hit the " + T.name + " instead of the " + goalT.name + "." : why;
+          const detail = T && okAir && hit === S.goal ? "Wrong trick: it had to be a " + S.goalTrick + ", not a " + ar.trick + "." : T && okAir ? "Hit the " + T.name + " instead of the " + goalT.name + "." : why;
           res = { kind: "letter", text: "MISSED: " + L, sub: detail + " " + sh.name + " gets the letter " + L + "." };
           if (sh.letters >= CFG.LETTERS.length) { sh.out = true; sh.outTurn = S.turnNo; res.sub += " " + sh.name + " is out."; }
         }
         S.queue = S.queue.filter((id) => !S.archers[id].out);
         if (S.queue.length) { S.shooter = S.queue.shift(); res.sub += " " + nm(S.shooter) + " is next."; }
         else {
-          S.mode = "set"; S.goal = -1;
+          S.mode = "set"; S.goal = -1; S.goalTrick = "";
           if (S.archers[S.setter].out) S.setter = nextAlive(S.setter);
           S.shooter = S.setter; res.sub += " " + nm(S.setter) + " sets again.";
         }
@@ -659,7 +680,7 @@ globalThis.SB = globalThis.SB || {};
     };
     S.start = function () {
       S.archers.forEach((a) => { a.letters = 0; a.out = false; a.outTurn = 0; });
-      S.setter = 0; S.shooter = 0; S.mode = "set"; S.goal = -1; S.queue = [];
+      S.setter = 0; S.shooter = 0; S.mode = "set"; S.goal = -1; S.goalTrick = ""; S.queue = [];
       S.phase = "intro"; S.phaseT = CFG.INTRO_T;
       emit({ t: "intro" });
     };

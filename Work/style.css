@@ -200,3 +200,22 @@ body.touch #rotate { display: flex; position: fixed; inset: 0; z-index: 60; alig
 #needClick > div { padding: 18px 30px; border-radius: 16px; background: var(--glass); border: 1px solid var(--edge); text-align: center; backdrop-filter: blur(8px); }
 #needClick b { display: block; font-size: 26px; }
 #needClick small { display: block; margin-top: 6px; font-size: 13px; opacity: 0.8; }
+/* v6: controls panel, always readable (bottom-left; the bottom centre stays free for HopLobby) */
+#keys { left: 14px; bottom: 14px; transform: none; white-space: normal; font-size: 15px; color: #fff4dc; background: rgba(20, 16, 11, 0.72); border: 2px solid rgba(255, 213, 46, 0.55); border-radius: 12px; padding: 8px 12px 10px; opacity: 0.8; transition: opacity 0.2s, border-color 0.2s; }
+#keys.mine { opacity: 1; border-color: #ffd52e; }
+#keys .kh { font-size: 12px; font-weight: 900; letter-spacing: 0.16em; color: #ffd52e; margin-bottom: 4px; }
+#keys .kr { display: flex; align-items: center; gap: 8px; line-height: 1.55; font-weight: 700; }
+#keys .kr.sub { margin-left: 22px; font-size: 14px; }
+#keys .kr i { font-style: normal; opacity: 0.8; }
+#keys .kc { display: inline-block; min-width: 54px; text-align: center; padding: 1px 8px; font-weight: 900; font-size: 13px; color: #1b1408; background: #ffe9a8; border-radius: 6px; box-shadow: 0 2px 0 #9a6a00; }
+#goalTxt { font-size: 22px; }
+/* v7: the key combination for the trick you have to copy */
+#combo { position: absolute; right: 16px; top: 34%; width: 270px; padding: 10px 14px 12px; background: rgba(20, 16, 11, 0.8); border: 3px solid #ffd52e; border-radius: 14px; color: #fff4dc; display: none; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4); }
+#combo.on { display: block; }
+#combo .ch { font-size: 12px; font-weight: 900; letter-spacing: 0.16em; color: #ffd52e; }
+#combo .cn { font-size: 24px; font-weight: 900; font-style: italic; margin: 2px 0 8px; color: #9fe0ff; }
+#combo .cr { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 6px 0; font-weight: 700; font-size: 14px; }
+#combo .cr b { width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; background: #ffd52e; color: #1b1408; font-size: 13px; }
+#combo .cr i { font-style: normal; opacity: 0.7; }
+#combo .cr em { font-style: normal; width: 100%; padding-left: 28px; font-size: 13px; opacity: 0.85; margin-top: -2px; }
+#combo .kc { font-size: 15px; padding: 2px 10px; }

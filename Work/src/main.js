@@ -19,7 +19,7 @@ globalThis.SB = globalThis.SB || {};
 
   // Lobby options (the host picks them in the lobby; the same list is in hoplobby.json).
   const LOBBY_OPTIONS = [
-    { key: "letters", label: "Letters to lose", type: "choice", default: "5", choices: [{ value: "5", label: "A-R-R-O-W (5 letters)" }, { value: "3", label: "B-O-W (3 letters, shorter)" }] },
+    { key: "letters", label: "Game length", type: "choice", default: "5", choices: [{ value: "5", label: "Full game: A-R-R-O-W (5 letters)" }, { value: "3", label: "Quick game: B-O-W (3 letters)" }] },
     { key: "air", label: "A shot counts", type: "choice", default: "air", choices: [{ value: "air", label: "Only if released in the air" }, { value: "any", label: "From anywhere (easier)" }] },
     { key: "rival", label: "Computer rival when you play alone", type: "choice", default: "1", choices: [{ value: "0", label: "Easy" }, { value: "1", label: "Normal" }, { value: "2", label: "Hard" }] }
   ];

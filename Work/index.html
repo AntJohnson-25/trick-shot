@@ -6,7 +6,7 @@
 <title>Trick Shot: Archery HORSE</title>
 <meta name="description" content="Trick Shot is archery HORSE with friends. Jump, flip and twist, stick an arrow in a target from the air, and make everyone else match it or spell A-R-R-O-W.">
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=7">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 </head>
 <body>
@@ -25,11 +25,23 @@
   </div>
   <div id="goalPin"><div id="goalArrow"><svg viewBox="0 0 40 40" width="34" height="34"><path d="M6 20 H28 M20 8 L32 20 L20 32" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div id="goalPinTxt"></div></div>
   <div id="inset"><span>TARGET CAM</span><b></b></div>
+  <div id="combo"></div>
   <div id="airTag">IN THE AIR</div>
   <div id="popup"></div>
   <div id="big"></div>
   <div id="sub"></div>
-  <div id="keys"><b>WASD</b> move &nbsp;·&nbsp; <b>Space</b> jump (again in the air = flip, aim it with WASD) &nbsp;·&nbsp; <b>Q / E</b> twist &nbsp;·&nbsp; <b>tap click</b> draw + shoot (or <b>hold</b> and let go to time it)</div>
+  <div id="keys">
+    <div class="kh">CONTROLS</div>
+    <div class="kr"><span class="kc">W A S D</span><span>move</span></div>
+    <div class="kr"><span class="kc">SPACE</span><span>jump</span></div>
+    <div class="kr"><span class="kc">SPACE</span><i>again in the air +</i></div>
+    <div class="kr sub"><span class="kc">W</span><span>front flip</span></div>
+    <div class="kr sub"><span class="kc">S</span><span>back flip</span></div>
+    <div class="kr sub"><span class="kc">A / D</span><span>side flip</span></div>
+    <div class="kr sub"><span class="kc">none</span><span>twist jump</span></div>
+    <div class="kr"><span class="kc">Q / E</span><span>corkscrew spin</span></div>
+    <div class="kr"><span class="kc">CLICK</span><span>shoot (tap, or hold + release)</span></div>
+  </div>
   <div id="slowNote"></div>
 </div>
 
@@ -49,17 +61,17 @@ addEventListener("unhandledrejection", function (e) { var m = document.getElemen
 </script>
 
 <script src="https://hoplobby.com/sdk/v1/hoplobby.js"></script>
-<script type="module" src="src/boot.js?v=5"></script>
-<script defer src="src/sim.js?v=5"></script>
-<script defer src="src/chars/roster.js?v=5"></script>
-<script defer src="src/chars/clips.js?v=5"></script>
-<script defer src="src/body.js?v=5"></script>
-<script defer src="src/world.js?v=5"></script>
-<script defer src="src/fx.js?v=5"></script>
-<script defer src="src/view.js?v=5"></script>
-<script defer src="src/input.js?v=5"></script>
-<script defer src="src/audio.js?v=5"></script>
-<script defer src="src/hud.js?v=5"></script>
-<script defer src="src/main.js?v=5"></script>
+<script type="module" src="src/boot.js?v=7"></script>
+<script defer src="src/sim.js?v=7"></script>
+<script defer src="src/chars/roster.js?v=7"></script>
+<script defer src="src/chars/clips.js?v=7"></script>
+<script defer src="src/body.js?v=7"></script>
+<script defer src="src/world.js?v=7"></script>
+<script defer src="src/fx.js?v=7"></script>
+<script defer src="src/view.js?v=7"></script>
+<script defer src="src/input.js?v=7"></script>
+<script defer src="src/audio.js?v=7"></script>
+<script defer src="src/hud.js?v=7"></script>
+<script defer src="src/main.js?v=7"></script>
 </body>
 </html>

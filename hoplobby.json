@@ -5,10 +5,10 @@
   "maxPlayers": 4,
   "lateJoin": false,
   "options": [
-    { "key": "letters", "label": "Letters to lose", "type": "choice", "default": "5",
+    { "key": "letters", "label": "Game length", "type": "choice", "default": "5",
       "choices": [
-        { "value": "5", "label": "A-R-R-O-W (5 letters)" },
-        { "value": "3", "label": "B-O-W (3 letters, shorter)" }
+        { "value": "5", "label": "Full game: A-R-R-O-W (5 letters)" },
+        { "value": "3", "label": "Quick game: B-O-W (3 letters)" }
       ] },
     { "key": "air", "label": "A shot counts", "type": "choice", "default": "air",
       "choices": [
