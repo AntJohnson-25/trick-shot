@@ -23,6 +23,14 @@ http.createServer(function (req, res) {
   if (file.indexOf(root) !== 0) { res.writeHead(403); res.end(); return; }
   fs.readFile(file, function (err, data) {
     if (err) { res.writeHead(404); res.end("not found"); return; }
+    // TEST ONLY: the game has no test switches of its own. A page asked for with ?fake=<id> gets the stand-in SDK
+    // (tools/fake-hoplobby.js) in place of HopLobby's, and &auto adds the autopilot (tools/auto.js).
+    const q = new URLSearchParams(req.url.split("?")[1] || "");
+    if (q.has("fake") && path.extname(file) === ".html") {
+      let html = data.toString("utf8").replace('<script src="https://hoplobby.com/sdk/v1/hoplobby.js"></script>', '<script type="module" src="/tools/fake-hoplobby.js"></script>');
+      if (q.has("auto")) html = html.replace("</body>", '<script defer src="/tools/auto.js"></script>\n</body>');
+      data = Buffer.from(html, "utf8");
+    }
     res.writeHead(200, { "Content-Type": TYPES[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" });
     res.end(data);
   });

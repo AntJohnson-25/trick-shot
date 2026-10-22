@@ -9,8 +9,6 @@ globalThis.SB = globalThis.SB || {};
 (function (SB) {
   "use strict";
   const $ = (id) => document.getElementById(id);
-  const Q = new URLSearchParams(location.search);
-  const NOLOCK = Q.has("nolock");
   const DRIVER = "Aj";                                  // the hidden body that plays the clips on every player's avatar
   const BOT_BODIES = ["Ch06", "Ch46", "Ch36", "Ch14"];
   const SEND_EVERY = 1 / 15;
@@ -33,16 +31,23 @@ globalThis.SB = globalThis.SB || {};
   const clean = (s) => String(s || "Archer").replace(/[\u0000-\u001f<>]/g, "").trim().slice(0, 14) || "Archer";
   function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
   const hostId = () => ((HL.players || []).find((p) => p.isHost) || {}).id || (HL.context && HL.context.hostId);
+  // The round's roster (who HopLobby started this round with); null on a page without sessions = everyone plays.
+  function roster(ctx) {
+    const s = (HL.session && HL.session.get && HL.session.get()) || ctx.session;
+    return s && Array.isArray(s.roster) && s.roster.length ? new Set(s.roster) : null;
+  }
+  const CREDITS = "three.js (MIT) · characters and animations from Adobe Mixamo · players are their own HopLobby avatars · game by Calamity Tech Solutions Group";
 
   // ------------------------------------------------------------------ boot
   async function boot() {
-    if (Q.has("fake")) await import("../../tools/fake-hoplobby.js");
     HL = globalThis.HopLobby;
     if (!HL) throw new Error("The HopLobby SDK did not load");
     progress(0.03, "Connecting…");
     const ctx = await HL.init({ lobbyOptions: LOBBY_OPTIONS, options: DEFAULTS });
     const dev = HL.device || {};
-    if ((dev.touch || dev.mobile) && !Q.has("desktop")) {
+    // Phones and tablets can't play it; a touchscreen laptop (it has a mouse or trackpad too) can.
+    const finePointer = !!(globalThis.matchMedia && matchMedia("(any-pointer: fine)").matches);
+    if (dev.mobile || (dev.touch && !finePointer)) {
       document.body.classList.add("touch");
       $("loading").classList.add("hidden");
       HL.ready();
@@ -52,8 +57,10 @@ globalThis.SB = globalThis.SB || {};
     SB.CFG.LETTERS = String(opt.letters) === "3" ? "BOW" : "ARROW";
     SB.CFG.NEED_AIR = opt.air !== "any";
 
-    // The archers: the lobby's players (up to four), in a fixed order every screen agrees on; alone, a computer rival.
-    const humans = (HL.players || []).slice().sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, 4);
+    // The archers: the round's roster (up to four), in a fixed order every screen agrees on; alone, a computer rival.
+    // Lobby members who didn't ready up aren't in it: they wait in HopLobby's lobby for the next round.
+    const inRound = roster(ctx);
+    const humans = (HL.players || []).filter((p) => !inRound || inRound.has(p.id)).sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, 4);
     S.players = humans.map((p) => ({ id: p.id, name: clean(p.name), bot: false, body: DRIVER, you: p.id === ctx.playerId }));
     if (S.players.length < 2) {
       const R = SB.ROSTER || [];
@@ -61,14 +68,21 @@ globalThis.SB = globalThis.SB || {};
       S.players.push({ id: "bot", name: r ? r.name : "Rival", bot: true, body: id, you: false });
     }
     S.me = S.players.findIndex((p) => p.you);
-    if (S.me < 0) throw new Error("You are not in this lobby's player list");
+    if (S.me < 0) {
+      // Not in this round (it started without us): HopLobby brings us in for the next one.
+      $("ld-msg").textContent = "This round has started. You're in the next one.";
+      $("ld-fill").style.width = "100%";
+      HL.ready();
+      return;
+    }
+    const rival = parseInt(opt.rival, 10);
 
     progress(0.08, "Loading archers…");
     const ids = Array.from(new Set(S.players.map((p) => p.body)));
     await SB.Body.load(ids, (d, n) => progress(0.08 + 0.4 * d / n, "Loading archers " + d + "/" + n + "…"));
 
     progress(0.5, "Building the arena…");
-    const sim = SB.createSim({ net: true, host: !!HL.isHost, kinds: S.players.map((p, i) => (p.bot ? "bot" : i === S.me ? "local" : "remote")), local: S.me, difficulty: Math.max(0, Math.min(2, +opt.rival || 1)), seed: hash(ctx.lobbyCode || "x") });
+    const sim = SB.createSim({ net: true, host: !!HL.isHost, kinds: S.players.map((p, i) => (p.bot ? "bot" : i === S.me ? "local" : "remote")), local: S.me, difficulty: Number.isFinite(rival) ? Math.max(0, Math.min(2, rival)) : 1, seed: hash(ctx.lobbyCode || "x") });
     S.sim = sim;
     sim.archers.forEach((a, i) => { a.body = S.players[i].body; a.name = S.players[i].name; });
     sim.introHold = S.players.some((p, i) => !p.bot && i !== S.me);   // the host waits for everyone's "hi"
@@ -94,7 +108,7 @@ globalThis.SB = globalThis.SB || {};
 
     wire(ctx);
     SB.Input.init($("c"), onLock);
-    SB.Input.wantLock = !NOLOCK;
+    SB.Input.wantLock = true;
     SB.Input.onFail = onLockFail;
     applySettings();
     SB.Hud.show(true);
@@ -105,8 +119,7 @@ globalThis.SB = globalThis.SB || {};
     if (!HL.isHost) { send({ k: "hi" }); HL.requestState(); }
     else if (!sim.introHold) { /* alone: nothing to wait for */ }
     else setTimeout(function () { sim.introHold = false; }, 12000);    // never wait for a player who is not coming
-    if (Q.has("auto")) await new Promise(function (res) { const s = document.createElement("script"); s.src = "../tools/auto.js"; s.onload = res; s.onerror = res; document.head.appendChild(s); });
-    if (!NOLOCK && !Q.has("auto")) showClick("Click to aim", "Esc gives the mouse back (HopLobby's menu)");
+    showClick("Click to aim", "Esc gives the mouse back (HopLobby's menu)");
     $("needClick").addEventListener("click", function () { SB.Audio.init(); SB.Input.lock(); });
     addEventListener("pointerdown", function () { SB.Audio.init(); }, { once: true });
     requestAnimationFrame(loop);
@@ -126,20 +139,28 @@ globalThis.SB = globalThis.SB || {};
         { keys: ["Q", "E"], action: "Add a twist" },
         { keys: ["Click"], action: "Tap: draw and shoot. Hold and let go to time it" }
       ] }],
-      controlsNote: "Your shot only counts if you are in the air when the arrow leaves the bow."
+      controlsNote: "Your shot only counts if you are in the air when the arrow leaves the bow.",
+      actions: [{ id: "credits", label: "Credits" }]
     }).catch(function (e) { console.warn("menu", e); });
+    HL.on("menuAction", function (id) { if (id === "credits") showCredits(); });
     HL.on("message", onMessage);
     HL.on("graphics", function (g) { SB.View.applyGraphics(g); });
     HL.on("settings", applySettings);
     HL.on("pause", function () { S.paused = true; if (document.pointerLockElement) document.exitPointerLock(); });
-    HL.on("resume", function () { S.paused = false; if (!SB.Input.locked && !SB.Input.free && !NOLOCK) showClick("Click to aim", ""); });
+    HL.on("resume", function () { S.paused = false; if (!SB.Input.locked && !SB.Input.free) showClick("Click to aim", ""); });
     HL.on("players", reconcile);
     HL.on("leave", reconcile);
-    HL.on("host", function (h) { if (S.sim) { S.sim.isHost = h === ctx.playerId; reconcile(); } });
-    HL.on("state", function (st) {
-      // A late or reloaded screen: pick up the turn the host is on.
+    HL.on("host", function (h) {
+      if (!S.sim) return;
+      S.sim.isHost = h === ctx.playerId;
+      reconcile();
+      // The old host left after the match ended but before it sent the results: we send them instead.
+      if (S.sim.isHost && S.sim.phase === "matchover" && !S.ended && S.endT < 0) S.endT = 1.5;
+    });
+    HL.on("state", function (st, from) {
+      // A late or reloaded screen: pick up the turn the host is on (only the host's word counts).
       const sim = S.sim;
-      if (!sim || !st || typeof st !== "object") return;
+      if (!sim || sim.isHost || from !== hostId() || !st || typeof st !== "object") return;
       if (st.snap && st.phase === "turn" && sim.applyTurn(st.snap) && typeof st.turnT === "number") sim.turnT = st.turnT;
       if (st.snap && st.phase === "matchover") sim.applyOver(st.snap.winner);
       sim.introHold = false;
@@ -225,6 +246,8 @@ globalThis.SB = globalThis.SB || {};
     });
   }
   function endGame() {
+    if (S.ended) return;
+    S.ended = true;
     const sim = S.sim, L = SB.CFG.LETTERS.length;
     let place = 0;
     const entries = [];
@@ -260,6 +283,11 @@ globalThis.SB = globalThis.SB || {};
     SB.Hud.say(w ? (w.id === sim.humanId ? "YOU WIN!" : w.name.toUpperCase() + " WINS") : "GAME OVER", "HopLobby shows the results next", 60, w && w.id === sim.humanId ? "good" : "bad");
   }
 
+  function showCredits() {
+    $("creditsTxt").textContent = CREDITS;
+    $("credits").classList.remove("hidden");
+  }
+
   // ------------------------------------------------------------------ pointer lock
   function showClick(title, sub) {
     $("ncTitle").textContent = title; $("ncSub").textContent = sub || "";
@@ -267,7 +295,7 @@ globalThis.SB = globalThis.SB || {};
   }
   function onLock(locked) {
     if (locked) { $("needClick").classList.add("hidden"); return; }
-    if (S.mode === "play" && !S.paused && !SB.Input.free) showClick("Click to aim", "Esc gives the mouse back (HopLobby's menu)");
+    if (S.mode === "play" && !S.paused && !SB.Input.free && !SB.autopilot) showClick("Click to aim", "Esc gives the mouse back (HopLobby's menu)");
   }
   function onLockFail() {
     // A frame that will not give out pointer lock: fall back to the plain mouse.
@@ -279,7 +307,7 @@ globalThis.SB = globalThis.SB || {};
   function localInput(sim) {
     const I = SB.Input, a = sim.human();
     if (SB.autopilot && !S.paused) return SB.autopilot(sim);
-    const ready = (I.locked || I.free || NOLOCK) && !S.paused;
+    const ready = (I.locked || I.free) && !S.paused;
     if (ready) return (S.lastInp = I.sample());
     // No mouse right now (paused, or lock lost): stand still, and keep a drawn bow drawn.
     return { yaw: I.yaw, pitch: I.pitch, fire: !!a && (a.state === "draw" || a.state === "aim"), mx: 0, mz: 0, jump: false, spin: 0 };

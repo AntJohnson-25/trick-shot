@@ -6,7 +6,7 @@
 <title>Trick Shot: Archery HORSE</title>
 <meta name="description" content="Trick Shot is archery HORSE with friends. Jump, flip and twist, stick an arrow in a target from the air, and make everyone else match it or spell A-R-R-O-W.">
 <link rel="icon" href="data:,">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 <script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js" } }</script>
 </head>
 <body>
@@ -46,6 +46,7 @@
 </div>
 
 <div id="needClick" class="hidden"><div><b id="ncTitle">Click to aim</b><small id="ncSub">Esc gives the mouse back (HopLobby's menu)</small></div></div>
+<div id="credits" class="hidden"><div><b>Credits</b><p id="creditsTxt"></p><button type="button" onclick="this.closest('#credits').classList.add('hidden')">Close</button></div></div>
 <div id="rotate"><div>Trick Shot needs a keyboard and mouse<br><small>Open it on a computer</small></div></div>
 
 <div id="loading">
@@ -61,17 +62,17 @@ addEventListener("unhandledrejection", function (e) { var m = document.getElemen
 </script>
 
 <script src="https://hoplobby.com/sdk/v1/hoplobby.js"></script>
-<script type="module" src="src/boot.js?v=7"></script>
-<script defer src="src/sim.js?v=7"></script>
-<script defer src="src/chars/roster.js?v=7"></script>
-<script defer src="src/chars/clips.js?v=7"></script>
-<script defer src="src/body.js?v=7"></script>
-<script defer src="src/world.js?v=7"></script>
-<script defer src="src/fx.js?v=7"></script>
-<script defer src="src/view.js?v=7"></script>
-<script defer src="src/input.js?v=7"></script>
-<script defer src="src/audio.js?v=7"></script>
-<script defer src="src/hud.js?v=7"></script>
-<script defer src="src/main.js?v=7"></script>
+<script type="module" src="src/boot.js?v=8"></script>
+<script defer src="src/sim.js?v=8"></script>
+<script defer src="src/chars/roster.js?v=8"></script>
+<script defer src="src/chars/clips.js?v=8"></script>
+<script defer src="src/body.js?v=8"></script>
+<script defer src="src/world.js?v=8"></script>
+<script defer src="src/fx.js?v=8"></script>
+<script defer src="src/view.js?v=8"></script>
+<script defer src="src/input.js?v=8"></script>
+<script defer src="src/audio.js?v=8"></script>
+<script defer src="src/hud.js?v=8"></script>
+<script defer src="src/main.js?v=8"></script>
 </body>
 </html>

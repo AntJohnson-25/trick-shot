@@ -200,6 +200,12 @@ body.touch #rotate { display: flex; position: fixed; inset: 0; z-index: 60; alig
 #needClick > div { padding: 18px 30px; border-radius: 16px; background: var(--glass); border: 1px solid var(--edge); text-align: center; backdrop-filter: blur(8px); }
 #needClick b { display: block; font-size: 26px; }
 #needClick small { display: block; margin-top: 6px; font-size: 13px; opacity: 0.8; }
+#credits { position: fixed; inset: 0; z-index: 31; display: flex; align-items: center; justify-content: center; background: rgba(30, 18, 8, 0.45); }
+#credits.hidden { display: none; }
+#credits > div { max-width: min(460px, 90vw); padding: 18px 26px; border-radius: 16px; background: var(--glass); border: 1px solid var(--edge); text-align: center; backdrop-filter: blur(8px); }
+#credits b { display: block; font-size: 22px; }
+#credits p { margin: 10px 0 14px; font-size: 14px; line-height: 1.5; }
+#credits button { font: inherit; padding: 6px 20px; border-radius: 10px; border: 1px solid var(--edge); background: rgba(255, 255, 255, 0.15); color: inherit; cursor: pointer; }
 /* v6: controls panel, always readable (bottom-left; the bottom centre stays free for HopLobby) */
 #keys { left: 14px; bottom: 14px; transform: none; white-space: normal; font-size: 15px; color: #fff4dc; background: rgba(20, 16, 11, 0.72); border: 2px solid rgba(255, 213, 46, 0.55); border-radius: 12px; padding: 8px 12px 10px; opacity: 0.8; transition: opacity 0.2s, border-color 0.2s; }
 #keys.mine { opacity: 1; border-color: #ffd52e; }

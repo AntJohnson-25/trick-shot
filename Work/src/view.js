@@ -40,11 +40,12 @@ globalThis.SB = globalThis.SB || {};
     V.camera.updateProjectionMatrix();
   };
   // The player's HopLobby graphics preset (potato..ultra) as numbers: resolution, shadows, long grass, fog distance.
-  // The auto step-down below may still go lower when frames drop, never higher.
+  // The step-down below only runs when the player left graphics on Auto; a preset they picked is kept as it is.
   V.applyGraphics = function (g) {
     if (!g) return;
     const sun = V.world.sun, shadows = g.shadows !== "off";
     V.preset = g;
+    V.auto = !!g.auto;
     V.quality.pr = Math.max(0.5, Math.min(devicePixelRatio || 1, g.pixelRatio || 1));
     V.quality.shadows = shadows;
     V.renderer.shadowMap.enabled = shadows;
@@ -54,7 +55,7 @@ globalThis.SB = globalThis.SB || {};
       if (sun.shadow.mapSize.x !== size) { sun.shadow.mapSize.set(size, size); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; } }
       V.renderer.shadowMap.type = g.shadows === "soft" ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
     }
-    if (SB.World.grass) SB.World.grass.visible = (g.drawDistance === undefined ? 1 : g.drawDistance) >= 0.45;
+    if (SB.World.grass) SB.World.grass.visible = g.level !== "potato" && (g.drawDistance === undefined ? 1 : g.drawDistance) >= 0.45;
     if (V.scene.fog) { V.scene.fog.far = 130 + 130 * clamp(g.drawDistance === undefined ? 1 : g.drawDistance, 0, 1); V.scene.fog.near = V.scene.fog.far * 0.27; }
     V.slow = 0; V.downgraded = "";
     V.scene.traverse(function (o) { if (o.material) [].concat(o.material).forEach((x) => { x.needsUpdate = true; }); });
@@ -125,7 +126,7 @@ globalThis.SB = globalThis.SB || {};
     V.fps += (1 / Math.max(dt, 1e-3) - V.fps) * 0.04;
     // (not in the first seconds of a stage: building it and decoding the bodies' textures hitch)
     V.settle = Math.max(0, (V.settle || 0) - dt);
-    if (V.fps < 26 && !V.menuMode && V.settle <= 0) V.slow += dt; else V.slow = Math.max(0, V.slow - dt * 0.5);
+    if (V.auto && V.fps < 26 && !V.menuMode && V.settle <= 0) V.slow += dt; else V.slow = Math.max(0, V.slow - dt * 0.5);
     if (V.slow > 2.5) {
       V.slow = 0;
       if (V.quality.shadows) { V.setQuality(false, V.quality.pr); V.downgraded = "shadows off"; }

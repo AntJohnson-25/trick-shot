@@ -22,7 +22,7 @@ const ids = ["A", "B", "C", "D"].slice(0, n);
 const opts = JSON.stringify({ letters: q.get("letters") || "3", air: q.get("air") || "air", rival: q.get("rival") || "1" });
 for (const id of ids) {
   const f = document.createElement("iframe");
-  f.src = "/Work/index.html?fake=" + id + "&lobby=" + ids.join(",") + "&opts=" + encodeURIComponent(opts) + "&nolock=1&desktop=1" + (q.has("auto") ? "&auto=1" : "") + "&g=" + (q.get("g") || "low");
+  f.src = "/Work/index.html?fake=" + id + "&lobby=" + ids.join(",") + "&opts=" + encodeURIComponent(opts) + "" + (q.get("roster") ? "&roster=" + q.get("roster") : "") + (q.has("auto") ? "&auto=1" : "") + "&g=" + (q.get("g") || "low");
   f.id = "f" + id;
   if (q.get("big")) { f.style.cssText = q.get("big") === id ? "position:fixed;inset:0;width:100%;height:100%;z-index:1" : "position:fixed;right:0;bottom:0;width:160px;height:90px;z-index:2"; }
   document.getElementById("frames").appendChild(f);
